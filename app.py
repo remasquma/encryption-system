@@ -2,33 +2,29 @@ from flask import Flask, request, send_file, jsonify
 import subprocess
 import json
 import os
-import webbrowser
-import threading
-import time
+import sys
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return send_file("index.html", mimetype='text/html')
+    return send_file("index.html")
 
-@app.route("/generate", methods=['GET', 'POST'])
+@app.route("/generate")
 def generate():
+    size = request.args.get("size", "1")
+    text = request.args.get("text", "Hello World")
+
+    if not text or not text.strip():
+        return jsonify({"error": "Text input is empty"}), 400
+    
+    if size not in ["1", "2", "3"]:
+        return jsonify({"error": "Invalid key size"}), 400
+
     try:
-        size = request.args.get("size", "1")
-        text = request.args.get("text", "Hello World")
-
-        if not text or not text.strip():
-            return jsonify({"error": "Text input is empty"}), 400
+        # تشغيل encrypt.exe
+        exe_path = os.path.join(os.getcwd(), "encrypt.exe")
         
-        if size not in ["1", "2", "3"]:
-            return jsonify({"error": "Invalid key size"}), 400
-
-        exe_path = os.path.abspath("encrypt.exe")
-
-        if not os.path.exists(exe_path):
-            return jsonify({"error": f"encrypt.exe not found"}), 500
-
         result = subprocess.run(
             [exe_path, size, text],
             capture_output=True,
@@ -37,35 +33,18 @@ def generate():
         )
 
         if result.returncode != 0:
-            error_msg = result.stderr.strip()
-            return jsonify({"error": f"C++ process failed: {error_msg}"}), 500
+            return jsonify({"error": result.stderr}), 500
 
-        output = result.stdout.strip()
-        
-        if not output:
-            return jsonify({"error": "C++ returned empty output"}), 500
-
+        # محاولة تحويل لـ JSON
         try:
-            json_data = json.loads(output)
-            return jsonify(json_data), 200
-        except json.JSONDecodeError as e:
-            return jsonify({"error": f"Invalid JSON: {str(e)}"}), 500
+            return jsonify(json.loads(result.stdout))
+        except:
+            return jsonify({"result": result.stdout})
 
-    except subprocess.TimeoutExpired:
-        return jsonify({"error": "C++ process timeout"}), 500
     except Exception as e:
-        return jsonify({"error": f"Error: {str(e)}"}), 500
-
-# افتح المتصفح تلقائياً عند البدء
-def open_browser():
-    time.sleep(1.5)
-    webbrowser.open('http://127.0.0.1:5000')
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    # افتح المتصفح في thread منفصلة
-    threading.Thread(target=open_browser, daemon=True).start()
-    
-    # شغّل Flask
-    print("🚀 البرنامج يبدأ...")
-    print("🌐 سيفتح المتصفح تلقائياً على http://127.0.0.1:5000")
-    app.run(debug=False, host='127.0.0.1', port=5000)
+    # مهم: نستخدم PORT من Render
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
