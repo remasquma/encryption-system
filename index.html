@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>نظام التشفير المتكامل</title>
+    <script>
+    // إذا تم فتح الملف من المجلد مباشرة (file://)
+    if (window.location.protocol === 'file:') {
+        // توجيه إجباري للرابط الصحيح
+        window.location.replace('http://127.0.0.1:5000');
+        // منع أي شيء آخر من التشغيل
+        document.body.innerHTML = '<p style="text-align:center; margin-top:50px; color:#60a5fa; font-size:20px;">⏳ جاري التوجيه إلى الموقع الصحيح...</p>';
+    }
+</script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Courier New', monospace;
+        }
+
+        body {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #60a5fa;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+        }
+
+        .input-section {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #334155;
+        }
+
+        .key-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .key-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 20px;
+            background: #334155;
+            border: 2px solid #475569;
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .key-btn:hover {
+            background: #475569;
+            transform: translateY(-2px);
+        }
+
+        .key-btn.active {
+            background: #2563eb;
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            background: #0f172a;
+            border: 2px solid #334155;
+            color: white;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .encrypt-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            color: white;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .encrypt-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+        }
+
+        .results-container {
+            margin-top: 30px;
+        }
+
+        .info-card {
+            background: #1e293b;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .info-badge {
+            background: #2563eb;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .master-key {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid #3b82f6;
+        }
+
+        .master-key .label {
+            color: #94a3b8;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .master-key .value {
+            font-family: 'Courier New', monospace;
+            font-size: 1.4em;
+            color: #4ade80;
+            word-break: break-all;
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+
+        .subkeys-section {
+            background: #1e293b;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #334155;
+        }
+
+        .subkeys-section h3 {
+            color: #94a3b8;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subkeys-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .subkey-item {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            font-size: 0.9em;
+        }
+
+        .subkey-item:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            transition: all 0.3s;
+        }
+
+        .steps-section {
+            background: #1e293b;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #334155;
+        }
+
+        .steps-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #334155;
+        }
+
+        .steps-header h3 {
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .steps-count {
+            background: #334155;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .steps-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .step-item {
+            background: #0f172a;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #4ade80;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+            font-size: 0.9em;
+        }
+
+        .step-item:hover {
+            transform: translateX(5px);
+            background: #1a2538;
+        }
+
+        .final-results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin: 25px 0;
+        }
+
+        .result-box {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #334155;
+        }
+
+        .result-box.encrypted {
+            border-top: 4px solid #4ade80;
+        }
+
+        .result-box.decrypted {
+            border-top: 4px solid #f87171;
+        }
+
+        .result-box .label {
+            color: #94a3b8;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-box .value {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            word-break: break-all;
+            border: 1px solid #334155;
+        }
+
+        .result-box.encrypted .value {
+            color: #4ade80;
+        }
+
+        .result-box.decrypted .value {
+            color: #f87171;
+        }
+
+        .toggle-btn {
+            width: 100%;
+            padding: 15px;
+            background: #334155;
+            border: 2px solid #475569;
+            color: white;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn:hover {
+            background: #475569;
+        }
+
+        .toggle-btn.active {
+            background: #2563eb;
+            border-color: #3b82f6;
+        }
+
+        .error-message {
+            background: #7f1d1d;
+            color: #fecaca;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+            border: 1px solid #ef4444;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5f6b7a;
+        }
+
+        @media (max-width: 768px) {
+            .final-results {
+                grid-template-columns: 1fr;
+            }
+            
+            .key-buttons {
+                flex-direction: column;
+            }
+            
+            .key-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 نظام التشفير المتكامل</h1>
+
+        <div class="input-section">
+            <div class="key-buttons">
+                <button class="key-btn active" onclick="selectKey(1, this)">128-bit</button>
+                <button class="key-btn" onclick="selectKey(2, this)">256-bit</button>
+                <button class="key-btn" onclick="selectKey(3, this)">512-bit</button>
+            </div>
+
+            <textarea id="textInput" rows="3" placeholder="أدخل النص المراد تشفيره...">remas</textarea>
+
+            <button class="encrypt-btn" onclick="encrypt()">🔒 تشغيل التشفير</button>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <div style="color: #60a5fa;">جاري التشفير...</div>
+        </div>
+
+        <div id="error" class="error-message"></div>
+
+        <div id="results" class="results-container" style="display: none;">
+            <div class="info-card">
+                <span>📊 تم استلام <span id="charCount">0</span> حرف</span>
+                <span class="info-badge" id="keySizeInfo">128-bit</span>
+            </div>
+
+            <div class="master-key">
+                <div class="label">🔑 المفتاح الرئيسي</div>
+                <div id="masterKey" class="value"></div>
+            </div>
+
+            <div class="subkeys-section">
+                <h3><span>🗝️</span> المفاتيح الفرعية</h3>
+                <div id="subkeysList" class="subkeys-grid"></div>
+            </div>
+
+            <div class="steps-section">
+                <div class="steps-header">
+                    <h3><span>🔒</span> خطوات التشفير</h3>
+                    <span id="encryptCount" class="steps-count">0</span>
+                </div>
+                <div id="encryptSteps" class="steps-list"></div>
+            </div>
+
+            <div class="final-results">
+                <div class="result-box encrypted">
+                    <div class="label"><span>🔒</span> النتيجة النهائية (مشفرة)</div>
+                    <div id="finalEncrypted" class="value"></div>
+                </div>
+            </div>
+
+            <button id="toggleBtn" class="toggle-btn" onclick="toggleDecrypt()">🔓 عرض فك التشفير</button>
+
+            <div id="decryptSection" style="display: none;">
+                <div class="steps-section">
+                    <div class="steps-header">
+                        <h3><span>🔓</span> خطوات فك التشفير</h3>
+                        <span id="decryptCount" class="steps-count">0</span>
+                    </div>
+                    <div id="decryptSteps" class="steps-list"></div>
+                </div>
+
+                <div class="final-results">
+                    <div class="result-box decrypted">
+                        <div class="label"><span>🔓</span> النص بعد فك التشفير</div>
+                        <div id="finalDecrypted" class="value"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedKey = 1;
+        let decryptVisible = false;
+
+        function selectKey(size, btn) {
+            selectedKey = size;
+            document.querySelectorAll('.key-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const sizeText = size === 1 ? '128-bit' : (size === 2 ? '256-bit' : '512-bit');
+            document.getElementById('keySizeInfo').textContent = sizeText;
+        }
+
+        function toggleDecrypt() {
+            decryptVisible = !decryptVisible;
+            const section = document.getElementById('decryptSection');
+            const btn = document.getElementById('toggleBtn');
+            
+            if (decryptVisible) {
+                section.style.display = 'block';
+                btn.textContent = '🔒 إخفاء فك التشفير';
+                btn.classList.add('active');
+            } else {
+                section.style.display = 'none';
+                btn.textContent = '🔓 عرض فك التشفير';
+                btn.classList.remove('active');
+            }
+        }
+
+        async function encrypt() {
+            const text = document.getElementById('textInput').value.trim();
+            
+            if (!text) {
+                showError('الرجاء إدخال النص');
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            hideError();
+
+            try {
+                const response = await fetch('/generate?size=' + selectedKey + '&text=' + encodeURIComponent(text));
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    showError('خطأ: ' + (errorData.error || 'فشل طلب التشفير'));
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError('خطأ: ' + data.error);
+                    return;
+                }
+
+                renderResults(data);
+                document.getElementById('results').style.display = 'block';
+                
+                document.getElementById('decryptSection').style.display = 'none';
+                document.getElementById('toggleBtn').textContent = '🔓 عرض فك التشفير';
+                decryptVisible = false;
+                
+            } catch (error) {
+                showError('خطأ في الاتصال: ' + error.message);
+                console.error(error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function renderResults(data) {
+    console.log("البيانات المستقبلة من C++:", data);
+    
+    // عرض النص الأصلي
+    document.getElementById('charCount').textContent = data.originalText ? data.originalText.length : 0;
+    
+    // عرض المفتاح الرئيسي
+    document.getElementById('masterKey').textContent = data.masterKey || 'غير متوفر';
+
+    // عرض المفاتيح الفرعية
+    document.getElementById('subkeysList').innerHTML = '';
+    if (data.subKeys && Array.isArray(data.subKeys)) {
+        data.subKeys.forEach((subkey, index) => {
+            const div = document.createElement('div');
+            div.className = 'subkey-item';
+            div.innerHTML = `
+                <div style="font-weight: bold; color: #3b82f6; margin-bottom: 5px;">
+                    SubKey ${index + 1}:
+                </div>
+                <div style="font-family: 'Courier New', monospace; font-size: 0.85em; word-break: break-all; color: #4ade80;">
+                    ${subkey}
+                </div>
+            `;
+            document.getElementById('subkeysList').appendChild(div);
+        });
+    }
+
+    // عرض خطوات التشفير مع القيم
+    document.getElementById('encryptSteps').innerHTML = '';
+    if (data.stepsEncrypt && Array.isArray(data.stepsEncrypt)) {
+        data.stepsEncrypt.forEach((stepObj, index) => {
+            const div = document.createElement('div');
+            div.className = 'step-item encrypt';
+            
+            // تحديد لون الخطوة حسب نوعها
+            let borderColor = '#4ade80'; // أخضر افتراضي
+            if (stepObj.stepName.includes('S-Box')) {
+                borderColor = '#c084fc'; // بنفسجي
+            } else if (stepObj.stepName.includes('P-Box')) {
+                borderColor = '#f472b6'; // وردي
+            } else if (stepObj.stepName.includes('XOR')) {
+                borderColor = '#60a5fa'; // أزرق
+            } else if (stepObj.stepName.includes('Chaos')) {
+                borderColor = '#fb923c'; // برتقالي
+            } else if (stepObj.stepName.includes('Block')) {
+                borderColor = '#fbbf24'; // ذهبي
+            }
+            
+            div.style.borderLeftColor = borderColor;
+            
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-weight: bold; color: ${borderColor};">
+                        🔹 Step ${stepObj.stepNumber}: ${stepObj.stepName}
+                    </div>
+                </div>
+                <div style="font-family: 'Courier New', monospace; font-size: 0.85em; color: #4ade80; word-break: break-all; background: #0f172a; padding: 10px; border-radius: 5px; max-height: 150px; overflow-y: auto;">
+                    ${stepObj.value}
+                </div>
+            `;
+            
+            document.getElementById('encryptSteps').appendChild(div);
+        });
+        document.getElementById('encryptCount').textContent = data.totalStepsEncrypt + ' خطوة';
+    }
+
+    // عرض خطوات فك التشفير مع القيم
+    document.getElementById('decryptSteps').innerHTML = '';
+    if (data.stepsDecrypt && Array.isArray(data.stepsDecrypt)) {
+        data.stepsDecrypt.forEach((stepObj, index) => {
+            const div = document.createElement('div');
+            div.className = 'step-item decrypt';
+            
+            // تحديد لون الخطوة حسب نوعها
+            let borderColor = '#f87171'; // أحمر افتراضي
+            if (stepObj.stepName.includes('S-Box')) {
+                borderColor = '#c084fc'; // بنفسجي
+            } else if (stepObj.stepName.includes('P-Box')) {
+                borderColor = '#f472b6'; // وردي
+            } else if (stepObj.stepName.includes('XOR')) {
+                borderColor = '#60a5fa'; // أزرق
+            } else if (stepObj.stepName.includes('Chaos')) {
+                borderColor = '#fb923c'; // برتقالي
+            } else if (stepObj.stepName.includes('Block')) {
+                borderColor = '#fbbf24'; // ذهبي
+            }
+            
+            div.style.borderLeftColor = borderColor;
+            
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-weight: bold; color: ${borderColor};">
+                        🔓 Step ${stepObj.stepNumber}: ${stepObj.stepName}
+                    </div>
+                </div>
+                <div style="font-family: 'Courier New', monospace; font-size: 0.85em; color: #fca5a5; word-break: break-all; background: #0f172a; padding: 10px; border-radius: 5px; max-height: 150px; overflow-y: auto;">
+                    ${stepObj.value}
+                </div>
+            `;
+            
+            document.getElementById('decryptSteps').appendChild(div);
+        });
+        document.getElementById('decryptCount').textContent = data.totalStepsDecrypt + ' خطوة';
+    }
+
+    // عرض النتائج النهائية
+    document.getElementById('finalEncrypted').textContent = data.finalEncrypted || 'غير متوفر';
+    document.getElementById('finalDecrypted').textContent = data.finalDecrypted || 'غير متوفر';
+    
+    // عرض مؤشر النجاح
+    if (data.match) {
+        const successDiv = document.createElement('div');
+        successDiv.style.cssText = 'background: #166534; color: #4ade80; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #22c55e; text-align: center; font-weight: bold;';
+        successDiv.innerHTML = '✅ النص المفكوك يطابق النص الأصلي - التشفير/فك التشفير ناجح!';
+        document.getElementById('results').insertBefore(successDiv, document.getElementById('results').firstChild.nextSibling);
+    } else {
+        const failDiv = document.createElement('div');
+        failDiv.style.cssText = 'background: #7f1d1d; color: #fca5a5; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #ef4444; text-align: center; font-weight: bold;';
+        failDiv.innerHTML = '❌ تحذير: النص المفكوك لا يطابق النص الأصلي!';
+        document.getElementById('results').insertBefore(failDiv, document.getElementById('results').firstChild.nextSibling);
+    }
+}
+
+        function showError(msg) {
+            document.getElementById('error').textContent = msg;
+            document.getElementById('error').style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+        
+    </script>
+</body>
+</html>
